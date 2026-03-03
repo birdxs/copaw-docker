@@ -10,7 +10,15 @@
 
 ## 重要更新 (2026-03-03)
 
-### 新增功能
+### v0.0.4 新增功能
+- **Telegram 频道支持** - 新增 Telegram 机器人频道
+- **OpenAI & Azure OpenAI** - 新增内置模型提供商
+- **阿里云 coding-plan 提供商** - 新增模型提供商
+- **CORS 配置** - 新增 `COPAW_CORS_ORIGINS` 环境变量
+- **心跳监控面板** - 控制台新增监控 UI
+- **音频文件支持** - 钉钉和飞书频道支持音频文件
+
+### v0.0.3 新增功能
 - **MCP 支持** - 连接外部 MCP 服务器扩展能力
 - **本地模型支持增强** - llama.cpp、MLX、Ollama 集成
 - **一键安装脚本** - 跨平台安装支持
@@ -262,6 +270,7 @@ curl -N -X POST "http://localhost:8088/api/agent/process" \
 | **qq** | QQ 机器人 | `app_id`, `client_secret` |
 | **discord** | Discord 机器人 | `bot_token`, `http_proxy`, `http_proxy_auth` |
 | **imessage** | macOS iMessage | `db_path`, `poll_sec` |
+| **telegram** | Telegram 机器人 | `bot_token` |
 | **console** | 控制台 | （只需开关） |
 
 ### 频道通用字段
@@ -280,6 +289,7 @@ curl -N -X POST "http://localhost:8088/api/agent/process" \
 | Discord | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | 🚧 | 🚧 | 🚧 | 🚧 |
 | iMessage | ✓ | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ |
 | QQ | ✓ | 🚧 | 🚧 | 🚧 | 🚧 | ✓ | 🚧 | 🚧 | 🚧 | 🚧 |
+| Telegram | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 > ✓ = 已支持；🚧 = 施工中；✗ = 不支持
 

@@ -48,6 +48,16 @@ services:
       - OPENAI_BASE_URL=${OPENAI_BASE_URL:-}
       - OPENAI_MODEL_NAME=${OPENAI_MODEL_NAME:-}
 
+      # Azure OpenAI
+      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY:-}
+      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT:-}
+
+      # Coding Plan (阿里云)
+      - CODING_PLAN_API_KEY=${CODING_PLAN_API_KEY:-}
+
+      # CORS 配置
+      - COPAW_CORS_ORIGINS=${COPAW_CORS_ORIGINS:-}
+
       # 自动初始化
       - COPAW_AUTO_INIT=${COPAW_AUTO_INIT:-true}
 
