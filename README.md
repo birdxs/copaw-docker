@@ -268,7 +268,7 @@ docker compose exec copaw copaw clean --yes         # 不确认直接清空
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `COPAW_WORKING_DIR` | `/data/copaw` | 工作目录 |
+| `COPAW_WORKING_DIR` | `/data/copaw` | 工作目录（固定不可修改） |
 | `COPAW_CONFIG_FILE` | `config.json` | 配置文件名 |
 | `COPAW_HEARTBEAT_FILE` | `HEARTBEAT.md` | 心跳问题文件名 |
 | `COPAW_JOBS_FILE` | `jobs.json` | 定时任务文件名 |

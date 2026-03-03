@@ -91,15 +91,21 @@ RUN install -m 0755 -d /etc/apt/keyrings && \
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
+# 通过软链接实现持久化设置
+RUN mkdir -p /data/copaw/.runtime && \
+    echo "{}" > /data/copaw/.runtime/providers.json && \
+    echo "{}" > /data/copaw/.runtime/envs.json && \
+    ln -sf /data/copaw/.runtime/providers.json \
+          /usr/local/lib/python3.12/site-packages/copaw/providers/providers.json && \
+    ln -sf /data/copaw/.runtime/envs.json \
+          /usr/local/lib/python3.12/site-packages/copaw/envs/envs.json
+
 # 创建非 root 用户
 RUN groupadd -r copaw && \
     useradd -r -g copaw -d /data/copaw -s /sbin/nologin -c "CoPaw user" copaw
 
-# 设置 copaw 用户对 Python 包目录的写权限（用于 providers.json）
-RUN chown -R copaw:copaw /usr/local/lib/python3.12/site-packages/copaw
-
-# 创建工作目录并设置权限
-RUN mkdir -p /data/copaw && \
+# 设置目录所有权
+RUN chown -R copaw:copaw /usr/local/lib/python3.12/site-packages/copaw && \
     chown -R copaw:copaw /data/copaw
 
 # 设置工作目录

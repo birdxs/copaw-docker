@@ -20,7 +20,7 @@ log_error() {
 }
 
 # 获取配置
-COPAW_WORKING_DIR="${COPAW_WORKING_DIR:-/data/copaw}"
+COPAW_WORKING_DIR="/data/copaw"
 COPAW_LOG_LEVEL="${COPAW_LOG_LEVEL:-INFO}"
 COPAW_AUTO_INIT="${COPAW_AUTO_INIT:-true}"
 
@@ -67,6 +67,27 @@ if [ -n "${EMBEDDING_API_KEY}" ]; then
     log_info "Embedding API Key is configured."
 else
     log_warn "EMBEDDING_API_KEY is not set. Memory search features may be limited."
+fi
+
+# 确保 .runtime 目录存在
+RUNTIME_DIR="${COPAW_WORKING_DIR}/.runtime"
+if [ ! -d "${RUNTIME_DIR}" ]; then
+    log_info "Creating runtime directory: ${RUNTIME_DIR}"
+    mkdir -p "${RUNTIME_DIR}"
+fi
+
+# 检查并初始化 providers.json
+PROVIDERS_FILE="${RUNTIME_DIR}/providers.json"
+if [ ! -f "${PROVIDERS_FILE}" ]; then
+    log_info "Initializing empty providers.json"
+    echo "{}" > "${PROVIDERS_FILE}"
+fi
+
+# 检查并初始化 envs.json
+ENVS_FILE="${RUNTIME_DIR}/envs.json"
+if [ ! -f "${ENVS_FILE}" ]; then
+    log_info "Initializing empty envs.json"
+    echo "{}" > "${ENVS_FILE}"
 fi
 
 # 执行传入的命令
