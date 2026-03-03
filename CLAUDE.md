@@ -78,15 +78,32 @@ docker compose exec copaw copaw cron
 docker compose exec copaw copaw init --defaults   # Non-interactive default config
 docker compose exec copaw copaw init              # Interactive initialization
 
-# Model Management
+# Model Management (Cloud Providers)
 docker compose exec copaw copaw models list                    # List all providers
 docker compose exec copaw copaw models config                  # Interactive configuration
 docker compose exec copaw copaw models config-key modelscope   # Configure API Key
+docker compose exec copaw copaw models config-key dashscope    # Configure DashScope API Key
+docker compose exec copaw copaw models config-key custom       # Configure custom provider
 docker compose exec copaw copaw models set-llm                 # Switch active model
+
+# Model Management (Local Models - llama.cpp / MLX)
+docker compose exec copaw copaw models download <repo_id>      # Download local model
+docker compose exec copaw copaw models download Qwen/Qwen3-4B-GGUF
+docker compose exec copaw copaw models download Qwen/Qwen3-4B --backend mlx
+docker compose exec copaw copaw models local                   # List downloaded models
+docker compose exec copaw copaw models remove-local <model_id>  # Delete downloaded model
+
+# Model Management (Ollama)
+docker compose exec copaw copaw models ollama-pull <model>     # Pull Ollama model
+docker compose exec copaw copaw models ollama-list             # List Ollama models
+docker compose exec copaw copaw models ollama-remove <model>   # Delete Ollama model
 
 # Channel Management
 docker compose exec copaw copaw channels list       # List all channels
 docker compose exec copaw copaw channels config     # Interactive configuration
+docker compose exec copaw copaw channels install <key>    # Install custom channel
+docker compose exec copaw copaw channels add <key>        # Add channel to config
+docker compose exec copaw copaw channels remove <key>     # Remove custom channel
 
 # Skills Management
 docker compose exec copaw copaw skills list         # List all skills
@@ -95,17 +112,27 @@ docker compose exec copaw copaw skills config       # Interactive enable/disable
 # Cron Jobs
 docker compose exec copaw copaw cron list           # List all jobs
 docker compose exec copaw copaw cron create ...     # Create a job
+docker compose exec copaw copaw cron state <job_id> # Check job state
+docker compose exec copaw copaw cron pause <job_id> # Pause a job
+docker compose exec copaw copaw cron resume <job_id># Resume a paused job
 docker compose exec copaw copaw cron run <job_id>   # Run once immediately
 
 # Environment Variables
 docker compose exec copaw copaw env list            # List all variables
 docker compose exec copaw copaw env set KEY VALUE   # Set a variable
+docker compose exec copaw copaw env delete KEY      # Delete a variable
 
 # Chat Sessions
 docker compose exec copaw copaw chats list          # List all sessions
+docker compose exec copaw copaw chats get <id>      # Get session details
+docker compose exec copaw copaw chats create ...    # Create new session
+docker compose exec copaw copaw chats update <id> --name "New Name"  # Rename session
+docker compose exec copaw copaw chats delete <id>   # Delete session
 
 # Maintenance
 docker compose exec copaw copaw clean               # Clean working directory (with confirmation)
+docker compose exec copaw copaw clean --yes         # Clean without confirmation
+docker compose exec copaw copaw clean --dry-run     # Show what would be deleted
 ```
 
 ### Data Management
@@ -175,7 +202,8 @@ All CoPaw data is stored in the Docker volume `copaw-data` at `/data/copaw`:
 | `chats.json` | Chat session list |
 | `active_skills/` | Currently active skills |
 | `customized_skills/` | User-defined skills |
-| `memory/` | Agent memory files |
+| `custom_channels/` | User-defined channel modules |
+| `memory/` | Agent memory files (with daily logs) |
 
 ### Environment Variables
 
@@ -223,11 +251,87 @@ Access http://localhost:8088/ after startup:
 | Control | Sessions | Filter, rename, delete sessions |
 | Control | Cron Jobs | Create/edit/delete tasks, run immediately |
 | Agent | Workspace | Edit persona files, view memory, upload/download |
-| Agent | Skills | Enable/disable/create/delete skills |
+| Agent | Skills | Enable/disable/create/import/delete skills |
 | Agent | MCP | Enable/disable/create/delete MCP clients |
 | Agent | Runtime Config | Modify max iterations and max input length |
-| Settings | Models | Configure providers, manage models, select model |
+| Settings | Models | Configure providers, manage local/Ollama models, select model |
 | Settings | Environment Variables | Add/edit/delete environment variables |
+
+## New Features (CoPaw 0.0.3+)
+
+### MCP (Model Context Protocol) Support
+
+CoPaw now supports connecting to external MCP servers to extend capabilities.
+
+**Prerequisites**: Node.js 18+ (for `npx` commands)
+
+**Configuration Format**:
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/directory"]
+    }
+  }
+}
+```
+
+**Management**:
+- Use **Console → Agent → MCP** to add/edit/enable/disable/delete MCP clients
+- Supports three JSON formats for easy import
+
+### Local Model Support
+
+CoPaw supports running models locally without API Keys:
+
+#### llama.cpp (Cross-platform)
+```bash
+# Install (not available in Docker by default, requires custom build)
+pip install 'copaw[llamacpp]'
+
+# Download model
+docker compose exec copaw copaw models download Qwen/Qwen3-4B-GGUF
+```
+
+#### MLX (Apple Silicon)
+```bash
+# Install
+pip install 'copaw[mlx]'
+
+# Download model
+docker compose exec copaw copaw models download Qwen/Qwen3-4B --backend mlx
+```
+
+#### Ollama
+```bash
+# Install
+pip install 'copaw[ollama]'
+
+# Pull model
+docker compose exec copaw copaw models ollama-pull mistral:7b
+docker compose exec copaw copaw models ollama-pull qwen3:8b
+```
+
+**Note**: Local model support requires additional dependencies. For Docker deployment, consider building a custom image with these extras.
+
+### Enhanced CLI Commands
+
+**Channel Management**:
+- `copaw channels install <key>` - Install custom channel module
+- `copaw channels add <key>` - Add channel to config
+- `copaw channels remove <key>` - Remove custom channel
+
+**Cron Job Management**:
+- `copaw cron state <job_id>` - Check job runtime state
+- `copaw cron pause <job_id>` - Pause a job
+- `copaw cron resume <job_id>` - Resume paused job
+
+**Chat Session Management**:
+- `copaw chats get <id>` - View session details
+- `copaw chats create ...` - Create new session
+- `copaw chats update <id> --name "..."` - Rename session
+- `copaw chats delete <id>` - Delete session
 
 ---
 

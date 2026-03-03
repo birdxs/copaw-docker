@@ -209,15 +209,27 @@ docker run --rm -v copaw-data:/data -v $(pwd):/backup \
 docker compose exec copaw copaw init --defaults   # 默认配置（不交互）
 docker compose exec copaw copaw init              # 交互式初始化
 
-# 模型管理
+# 模型管理（云端提供商）
 docker compose exec copaw copaw models list                    # 查看所有提供商
 docker compose exec copaw copaw models config                  # 交互式配置
-docker compose exec copaw copaw models config-key modelscope   # 配置 API Key
+docker compose exec copaw copaw models config-key modelscope   # 配置 ModelScope API Key
+docker compose exec copaw copaw models config-key dashscope    # 配置 DashScope API Key
+docker compose exec copaw copaw models config-key custom       # 配置自定义提供商
 docker compose exec copaw copaw models set-llm                 # 切换活跃模型
+
+# 模型管理（本地模型 - 需额外依赖）
+docker compose exec copaw copaw models download <repo_id>      # 下载本地模型 (llama.cpp/MLX)
+docker compose exec copaw copaw models local                   # 查看已下载模型
+docker compose exec copaw copaw models remove-local <model_id> # 删除已下载模型
+docker compose exec copaw copaw models ollama-pull <model>     # 拉取 Ollama 模型
+docker compose exec copaw copaw models ollama-list             # 列出 Ollama 模型
 
 # 频道管理
 docker compose exec copaw copaw channels list       # 查看所有频道
 docker compose exec copaw copaw channels config     # 交互式配置
+docker compose exec copaw copaw channels install <key>    # 安装自定义频道
+docker compose exec copaw copaw channels add <key>        # 添加频道到配置
+docker compose exec copaw copaw channels remove <key>     # 删除自定义频道
 
 # 技能管理
 docker compose exec copaw copaw skills list         # 查看所有技能
@@ -226,17 +238,26 @@ docker compose exec copaw copaw skills config       # 交互式启用/禁用
 # 定时任务
 docker compose exec copaw copaw cron list           # 列出所有任务
 docker compose exec copaw copaw cron create ...     # 创建任务
+docker compose exec copaw copaw cron state <job_id> # 查看任务状态
+docker compose exec copaw copaw cron pause <job_id> # 暂停任务
+docker compose exec copaw copaw cron resume <job_id># 恢复任务
 docker compose exec copaw copaw cron run <job_id>   # 立即执行一次
 
 # 环境变量
 docker compose exec copaw copaw env list            # 列出所有变量
 docker compose exec copaw copaw env set KEY VALUE   # 设置变量
+docker compose exec copaw copaw env delete KEY      # 删除变量
 
 # 会话管理
 docker compose exec copaw copaw chats list          # 列出所有会话
+docker compose exec copaw copaw chats get <id>      # 查看会话详情
+docker compose exec copaw copaw chats create ...    # 创建新会话
+docker compose exec copaw copaw chats update <id> --name "新名称"  # 重命名会话
+docker compose exec copaw copaw chats delete <id>   # 删除会话
 
 # 维护
 docker compose exec copaw copaw clean               # 清空工作目录（交互确认）
+docker compose exec copaw copaw clean --yes         # 不确认直接清空
 ```
 
 ---
@@ -409,7 +430,57 @@ docker compose restart
 
 ---
 
-## 更多信息
+## 新功能支持
+
+### MCP (模型上下文协议)
+
+CoPaw 0.0.3+ 支持 MCP（Model Context Protocol），可以连接外部 MCP 服务器扩展能力。
+
+**前置要求**: Node.js 18+（用于运行 `npx` 命令）
+
+**配置示例**（通过控制台添加）:
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/directory"]
+    }
+  }
+}
+```
+
+**管理方式**:
+- 控制台 → 智能体 → MCP → 创建客户端
+- 支持启用/禁用/编辑/删除 MCP 客户端
+
+### 本地模型支持
+
+CoPaw 支持本地运行模型（无需 API Key），但需要额外依赖：
+
+| 后端 | 说明 | 额外依赖 |
+|------|------|----------|
+| llama.cpp | 跨平台 | `pip install 'copaw[llamacpp]'` |
+| MLX | Apple Silicon 优化 | `pip install 'copaw[mlx]'` |
+| Ollama | Ollama 守护进程 | `pip install 'copaw[ollama]'` + Ollama 服务 |
+
+> **注意**: Docker 镜像默认不包含这些依赖。如需使用，需要自定义构建镜像或在容器中手动安装。
+
+### 控制台新功能
+
+**技能管理增强**:
+- 从 Skill Hub 导入技能（通过 URL）
+- 直接在控制台创建自定义技能
+
+**工作区功能**:
+- 上传/下载工作区（.zip 格式）
+- 支持工作区备份和迁移
+
+**运行配置**:
+- 可修改最大迭代次数 (max_iters)
+- 可修改最大输入长度 (max_input_length)
+
+---
 
 ### 控制台功能
 

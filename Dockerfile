@@ -1,8 +1,27 @@
+# ==================== CoPaw Docker 镜像 ====================
+#
+# 构建参数说明:
+#   COPAW_VERSION  - CoPaw 版本 (默认: latest)
+#   COPAW_EXTRAS   - 可选扩展，用逗号分隔 (例如: llamacpp,mlx,ollama)
+#
+# 使用示例:
+#   # 基础镜像（仅云端模型）
+#   docker build --build-arg COPAW_VERSION=latest -t copaw:latest .
+#
+#   # 带本地模型支持 (llama.cpp)
+#   docker build --build-arg COPAW_VERSION=latest --build-arg COPAW_EXTRAS=llamacpp -t copaw:local .
+#
+#   # 带多个本地模型支持
+#   docker build --build-arg COPAW_EXTRAS=llamacpp,ollama -t copaw:full .
+#
+# 注意: 本地模型支持会显著增加镜像大小，请按需选择。
+
 # ==================== 构建阶段 ====================
 FROM python:3.12-slim AS builder
 
 # 设置构建参数
 ARG COPAW_VERSION="latest"
+ARG COPAW_EXTRAS=""
 
 # 设置工作目录
 WORKDIR /build
@@ -15,11 +34,19 @@ RUN apt-get update && \
         && rm -rf /var/lib/apt/lists/* \
     && python -m pip install --no-cache-dir --upgrade pip setuptools wheel
 
-# 安装 CoPaw 及其依赖（支持动态版本指定）
+# 安装 CoPaw 及其依赖（支持动态版本指定和扩展）
 RUN if [ "$COPAW_VERSION" = "latest" ]; then \
-      pip install --no-cache-dir copaw; \
+      if [ -z "$COPAW_EXTRAS" ]; then \
+        pip install --no-cache-dir copaw; \
+      else \
+        pip install --no-cache-dir "copaw[$COPAW_EXTRAS]"; \
+      fi \
     else \
-      pip install --no-cache-dir copaw==${COPAW_VERSION}; \
+      if [ -z "$COPAW_EXTRAS" ]; then \
+        pip install --no-cache-dir copaw==${COPAW_VERSION}; \
+      else \
+        pip install --no-cache-dir "copaw[$COPAW_EXTRAS]==${COPAW_VERSION}"; \
+      fi \
     fi
 
 # ==================== 运行阶段 ====================
