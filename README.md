@@ -426,6 +426,7 @@ docker compose restart
 
 - **基础镜像**: `python:3.12-slim`
 - **Python 版本**: 3.12
+- **Node.js 版本**: 20.x LTS（用于 MCP 功能）
 - **工作目录**: `/data/copaw`
 - **运行用户**: `copaw`（非 root）
 
@@ -437,7 +438,7 @@ docker compose restart
 
 CoPaw 0.0.3+ 支持 MCP（Model Context Protocol），可以连接外部 MCP 服务器扩展能力。
 
-**前置要求**: Node.js 18+（用于运行 `npx` 命令）
+**前置要求**: 无额外要求（镜像已包含 Node.js 20.x LTS）
 
 **配置示例**（通过控制台添加）:
 ```json

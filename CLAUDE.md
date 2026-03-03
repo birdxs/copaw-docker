@@ -263,7 +263,7 @@ Access http://localhost:8088/ after startup:
 
 CoPaw now supports connecting to external MCP servers to extend capabilities.
 
-**Prerequisites**: Node.js 18+ (for `npx` commands)
+**Prerequisites**: None (Node.js 20.x LTS is pre-installed in the Docker image)
 
 **Configuration Format**:
 ```json
@@ -377,6 +377,7 @@ docker compose exec copaw copaw models ollama-pull qwen3:8b
 
 - **Base image**: `python:3.12-slim`
 - **Python version**: 3.12
+- **Node.js version**: 20.x LTS (included for MCP support)
 - **Working directory**: `/data/copaw`
 - **Run user**: `copaw` (non-root)
 - **Exposed port**: 8088

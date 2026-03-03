@@ -5,7 +5,7 @@
 #   COPAW_EXTRAS   - 可选扩展，用逗号分隔 (例如: llamacpp,mlx,ollama)
 #
 # 使用示例:
-#   # 基础镜像（仅云端模型）
+#   # 基础镜像（仅云端模型，包含 Node.js 用于 MCP）
 #   docker build --build-arg COPAW_VERSION=latest -t copaw:latest .
 #
 #   # 带本地模型支持 (llama.cpp)
@@ -14,7 +14,9 @@
 #   # 带多个本地模型支持
 #   docker build --build-arg COPAW_EXTRAS=llamacpp,ollama -t copaw:full .
 #
-# 注意: 本地模型支持会显著增加镜像大小，请按需选择。
+# 注意:
+#   - 本地模型支持会显著增加镜像大小，请按需选择
+#   - Node.js 20.x LTS 已预装用于 MCP 功能，约增加 150MB
 
 # ==================== 构建阶段 ====================
 FROM python:3.12-slim AS builder
@@ -76,6 +78,14 @@ RUN apt-get update && \
         curl \
         ca-certificates \
         && rm -rf /var/lib/apt/lists/*
+
+# 安装 Node.js 20.x LTS (用于 MCP 功能支持)
+RUN install -m 0755 -d /etc/apt/keyrings && \
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key -o /etc/apt/keyrings/nodesource.gpg && \
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" > /etc/apt/sources.list.d/nodesource.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends nodejs && \
+    rm -rf /var/lib/apt/lists/*
 
 # 从构建阶段复制 Python 包
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
