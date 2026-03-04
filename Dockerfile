@@ -72,6 +72,11 @@ ENV PYTHONUNBUFFERED=1 \
     COPAW_CONFIG_FILE="config.json" \
     COPAW_LOG_LEVEL="INFO"
 
+# 创建非 root 用户（在安装软件之前创建，避免 GID 被占用）
+# 固定 UID/GID 为 999
+RUN groupadd -r -g 999 copaw && \
+    useradd -r -u 999 -g 999 -d /data/copaw -s /sbin/nologin -c "CoPaw user" copaw
+
 # 安装运行时依赖
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -115,10 +120,6 @@ RUN mkdir -p /data/copaw/.runtime && \
           /usr/local/lib/python3.12/site-packages/copaw/providers/providers.json && \
     ln -sf /data/copaw/.runtime/envs.json \
           /usr/local/lib/python3.12/site-packages/copaw/envs/envs.json
-
-# 创建非 root 用户
-RUN groupadd -r copaw && \
-    useradd -r -g copaw -d /data/copaw -s /sbin/nologin -c "CoPaw user" copaw
 
 # 设置目录所有权
 RUN chown -R copaw:copaw /usr/local/lib/python3.12/site-packages/copaw && \
