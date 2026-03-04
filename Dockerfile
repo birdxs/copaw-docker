@@ -87,6 +87,22 @@ RUN install -m 0755 -d /etc/apt/keyrings && \
     apt-get install -y --no-install-recommends nodejs && \
     rm -rf /var/lib/apt/lists/*
 
+# 安装 Chromium 及依赖（无头模式，用于 MCP 浏览器功能）
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        chromium \
+        chromium-driver \
+        fonts-liberation \
+        fonts-noto-color-emoji \
+        fonts-wqy-zenhei \
+        && rm -rf /var/lib/apt/lists/*
+
+# 设置 Chromium 相关环境变量
+ENV CHROME_BIN=/usr/bin/chromium \
+    CHROME_PATH=/usr/bin/chromium \
+    PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium \
+    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+
 # 从构建阶段复制 Python 包
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin

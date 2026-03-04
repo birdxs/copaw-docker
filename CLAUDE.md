@@ -281,6 +281,53 @@ CoPaw now supports connecting to external MCP servers to extend capabilities.
 - Use **Console → Agent → MCP** to add/edit/enable/disable/delete MCP clients
 - Supports three JSON formats for easy import
 
+### Browser Support (Chromium Headless Mode)
+
+The Docker image includes Chromium browser in headless mode for MCP browser automation.
+
+**MCP Browser Server Configuration**:
+
+Puppeteer MCP:
+```json
+{
+  "mcpServers": {
+    "browser": {
+      "command": "npx",
+      "args": ["-y", "@executeautomation/puppeteer-mcp-server"],
+      "env": {
+        "HEADLESS": "true",
+        "CHROME_PATH": "/usr/bin/chromium"
+      }
+    }
+  }
+}
+```
+
+Playwright MCP:
+```json
+{
+  "mcpServers": {
+    "browser": {
+      "command": "npx",
+      "args": ["-y", "@executeautomation/playwright-mcp-server"],
+      "env": {
+        "HEADLESS": "true",
+        "PLAYWRIGHT_BROWSERS_PATH": "0"
+      }
+    }
+  }
+}
+```
+
+**Testing Chromium**:
+```bash
+# Check Chromium version
+docker compose exec copaw chromium --version
+
+# Test headless mode
+docker compose exec copaw chromium --headless --no-sandbox --disable-dev-shm-usage --disable-gpu --dump-dom https://example.com
+```
+
 ### Local Model Support
 
 CoPaw supports running models locally without API Keys:
@@ -378,6 +425,7 @@ docker compose exec copaw copaw models ollama-pull qwen3:8b
 - **Base image**: `python:3.12-slim`
 - **Python version**: 3.12
 - **Node.js version**: 20.x LTS (included for MCP support)
+- **Browser**: Chromium (headless mode, for MCP browser automation)
 - **Working directory**: `/data/copaw`
 - **Run user**: `copaw` (non-root)
 - **Exposed port**: 8088
