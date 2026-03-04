@@ -1,8 +1,29 @@
+# ==================== CoPaw Docker 镜像 ====================
+#
+# 构建参数说明:
+#   COPAW_VERSION  - CoPaw 版本 (默认: latest)
+#   COPAW_EXTRAS   - 可选扩展，用逗号分隔 (例如: llamacpp,mlx,ollama)
+#
+# 使用示例:
+#   # 基础镜像（仅云端模型，包含 Node.js 用于 MCP）
+#   docker build --build-arg COPAW_VERSION=latest -t copaw:latest .
+#
+#   # 带本地模型支持 (llama.cpp)
+#   docker build --build-arg COPAW_VERSION=latest --build-arg COPAW_EXTRAS=llamacpp -t copaw:local .
+#
+#   # 带多个本地模型支持
+#   docker build --build-arg COPAW_EXTRAS=llamacpp,ollama -t copaw:full .
+#
+# 注意:
+#   - 本地模型支持会显著增加镜像大小，请按需选择
+#   - Node.js 20.x LTS 已预装用于 MCP 功能，约增加 150MB
+
 # ==================== 构建阶段 ====================
 FROM python:3.12-slim AS builder
 
 # 设置构建参数
 ARG COPAW_VERSION="latest"
+ARG COPAW_EXTRAS=""
 
 # 设置工作目录
 WORKDIR /build
@@ -15,11 +36,19 @@ RUN apt-get update && \
         && rm -rf /var/lib/apt/lists/* \
     && python -m pip install --no-cache-dir --upgrade pip setuptools wheel
 
-# 安装 CoPaw 及其依赖（支持动态版本指定）
+# 安装 CoPaw 及其依赖（支持动态版本指定和扩展）
 RUN if [ "$COPAW_VERSION" = "latest" ]; then \
-      pip install --no-cache-dir copaw; \
+      if [ -z "$COPAW_EXTRAS" ]; then \
+        pip install --no-cache-dir copaw; \
+      else \
+        pip install --no-cache-dir "copaw[$COPAW_EXTRAS]"; \
+      fi \
     else \
-      pip install --no-cache-dir copaw==${COPAW_VERSION}; \
+      if [ -z "$COPAW_EXTRAS" ]; then \
+        pip install --no-cache-dir copaw==${COPAW_VERSION}; \
+      else \
+        pip install --no-cache-dir "copaw[$COPAW_EXTRAS]==${COPAW_VERSION}"; \
+      fi \
     fi
 
 # ==================== 运行阶段 ====================
@@ -50,19 +79,33 @@ RUN apt-get update && \
         ca-certificates \
         && rm -rf /var/lib/apt/lists/*
 
+# 安装 Node.js 20.x LTS (用于 MCP 功能支持)
+RUN install -m 0755 -d /etc/apt/keyrings && \
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key -o /etc/apt/keyrings/nodesource.gpg && \
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" > /etc/apt/sources.list.d/nodesource.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
 # 从构建阶段复制 Python 包
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
+
+# 通过软链接实现持久化设置
+RUN mkdir -p /data/copaw/.runtime && \
+    echo "{}" > /data/copaw/.runtime/providers.json && \
+    echo "{}" > /data/copaw/.runtime/envs.json && \
+    ln -sf /data/copaw/.runtime/providers.json \
+          /usr/local/lib/python3.12/site-packages/copaw/providers/providers.json && \
+    ln -sf /data/copaw/.runtime/envs.json \
+          /usr/local/lib/python3.12/site-packages/copaw/envs/envs.json
 
 # 创建非 root 用户
 RUN groupadd -r copaw && \
     useradd -r -g copaw -d /data/copaw -s /sbin/nologin -c "CoPaw user" copaw
 
-# 设置 copaw 用户对 Python 包目录的写权限（用于 providers.json）
-RUN chown -R copaw:copaw /usr/local/lib/python3.12/site-packages/copaw
-
-# 创建工作目录并设置权限
-RUN mkdir -p /data/copaw && \
+# 设置目录所有权
+RUN chown -R copaw:copaw /usr/local/lib/python3.12/site-packages/copaw && \
     chown -R copaw:copaw /data/copaw
 
 # 设置工作目录

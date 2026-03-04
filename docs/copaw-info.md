@@ -4,7 +4,33 @@
 >
 > 官方文档：http://copaw.agentscope.io/docs/
 >
-> **更新日期**: 2026-02-28
+> **更新日期**: 2026-03-03
+
+---
+
+## 重要更新 (2026-03-03)
+
+### v0.0.4 新增功能
+- **Telegram 频道支持** - 新增 Telegram 机器人频道
+- **OpenAI & Azure OpenAI** - 新增内置模型提供商
+- **阿里云 coding-plan 提供商** - 新增模型提供商
+- **CORS 配置** - 新增 `COPAW_CORS_ORIGINS` 环境变量
+- **心跳监控面板** - 控制台新增监控 UI
+- **音频文件支持** - 钉钉和飞书频道支持音频文件
+
+### v0.0.3 新增功能
+- **MCP 支持** - 连接外部 MCP 服务器扩展能力
+- **本地模型支持增强** - llama.cpp、MLX、Ollama 集成
+- **一键安装脚本** - 跨平台安装支持
+- **阿里云 ECS 一键部署** - 云端部署选项
+- **控制台功能增强** - 技能导入/创建、工作区上传下载、运行配置
+
+### CLI 新增命令
+- `copaw models download/remove-local` - 本地模型管理 (llama.cpp/MLX)
+- `copaw models ollama-pull/ollama-list/ollama-remove` - Ollama 模型管理
+- `copaw channels install/add/remove` - 自定义频道管理
+- `copaw cron pause/resume/state` - 定时任务状态管理
+- `copaw chats create/update/delete` - 会话管理
 
 ---
 
@@ -62,7 +88,7 @@ irm https://copaw.agentscope.io/install.ps1 | iex
 **可选参数：**
 ```bash
 # 安装指定版本
-curl -fsSL ... | bash -s -- --version 0.0.2
+curl -fsSL ... | bash -s -- --version 0.0.3
 
 # 从源码安装（开发/测试用）
 curl -fsSL ... | bash -s -- --from-source
@@ -70,6 +96,7 @@ curl -fsSL ... | bash -s -- --from-source
 # 安装本地模型支持
 bash install.sh --extras llamacpp    # llama.cpp（跨平台）
 bash install.sh --extras mlx         # MLX（Apple Silicon）
+bash install.sh --extras ollama      # Ollama（需 Ollama 服务运行）
 ```
 
 #### 方式二：pip 安装
@@ -87,7 +114,20 @@ pip install copaw
 
 > **重要**：使用创空间请将空间设为**非公开**，否则你的 CoPaw 可能被他人操纵。
 
-#### 方式四：部署到阿里云 ECS
+#### 方式四：Docker
+
+镜像在 **Docker Hub**（`agentscope/copaw`）。镜像 tag：`latest`（稳定版）、`pre`（PyPI 预发布版）。
+
+国内用户也可选用阿里云 ACR：`agentscope-registry.ap-southeast-1.cr.aliyuncs.com/agentscope/copaw`（tag 相同）。
+
+```bash
+docker pull agentscope/copaw:latest
+docker run -p 8088:8088 -v copaw-data:/app/working agentscope/copaw:latest
+```
+
+然后在浏览器打开 http://127.0.0.1:8088/ 进入控制台。配置、记忆与 Skills 保存在 `copaw-data` 卷中。
+
+#### 方式五：部署到阿里云 ECS
 
 打开 [CoPaw 阿里云 ECS 部署链接](https://computenest.console.aliyun.com/service/instance/create/cn-hangzhou?type=user&ServiceId=service-1ed84201799f40879884)，按页面提示填写部署参数。
 
@@ -158,13 +198,14 @@ curl -N -X POST "http://localhost:8088/api/agent/process" \
 ├── chats.json               # 会话列表（文件存储模式）
 ├── active_skills/           # 当前激活的技能
 ├── customized_skills/       # 用户自定义的技能
+├── custom_channels/         # 自定义频道模块
 ├── memory/                  # Agent 记忆文件（自动管理）
 │   ├── MEMORY.md            # 长期有效的关键信息
 │   └── YYYY-MM-DD.md        # 每日日志
 ├── SOUL.md                  # （必需）核心身份与行为原则
 ├── AGENTS.md                # （必需）详细的工作流程、规则和指南
 ├── PROFILE.md               # 身份和用户画像
-└── custom_channels/         # 自定义频道模块
+└── mcp_clients/             # MCP 客户端配置
 ```
 
 ### 文件说明
@@ -229,6 +270,7 @@ curl -N -X POST "http://localhost:8088/api/agent/process" \
 | **qq** | QQ 机器人 | `app_id`, `client_secret` |
 | **discord** | Discord 机器人 | `bot_token`, `http_proxy`, `http_proxy_auth` |
 | **imessage** | macOS iMessage | `db_path`, `poll_sec` |
+| **telegram** | Telegram 机器人 | `bot_token` |
 | **console** | 控制台 | （只需开关） |
 
 ### 频道通用字段
@@ -247,6 +289,7 @@ curl -N -X POST "http://localhost:8088/api/agent/process" \
 | Discord | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | 🚧 | 🚧 | 🚧 | 🚧 |
 | iMessage | ✓ | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ |
 | QQ | ✓ | 🚧 | 🚧 | 🚧 | 🚧 | ✓ | 🚧 | 🚧 | 🚧 | 🚧 |
+| Telegram | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 > ✓ = 已支持；🚧 = 施工中；✗ = 不支持
 
@@ -414,11 +457,11 @@ description: 我的自定义能力说明
 
 ## MCP (模型上下文协议)
 
-MCP 允许 CoPaw 连接到外部 MCP 服务器并使用它们的工具。
+MCP (Model Context Protocol) 允许 CoPaw 连接到外部 MCP 服务器并使用它们的工具。
 
 ### 前置要求
 
-- Node.js 18 或更高版本
+- Node.js 18 或更高版本（如果使用 `npx` 运行 MCP 服务器）
 
 ### 配置格式
 
@@ -437,7 +480,34 @@ MCP 允许 CoPaw 连接到外部 MCP 服务器并使用它们的工具。
 }
 ```
 
-**示例：文件系统 MCP 服务器**
+**格式 2：直接键值对格式**
+```json
+{
+  "client-name": {
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+    "env": {
+      "API_KEY": "your-api-key-here"
+    }
+  }
+}
+```
+
+**格式 3：单个客户端格式**
+```json
+{
+  "key": "client-name",
+  "name": "My MCP Client",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+  "env": {
+    "API_KEY": "your-api-key-here"
+  }
+}
+```
+
+### 示例：文件系统 MCP 服务器
+
 ```json
 {
   "mcpServers": {
@@ -451,10 +521,10 @@ MCP 允许 CoPaw 连接到外部 MCP 服务器并使用它们的工具。
 
 ### 管理 MCP 客户端
 
-在 控制台 → **智能体 → MCP** 中可以：
-- 查看所有客户端
-- 启用/禁用客户端
-- 编辑配置
+在 **控制台 → 智能体 → MCP** 中可以：
+- 查看所有客户端（以卡片形式）
+- 启用/禁用客户端（快速开关）
+- 编辑配置（查看和编辑 JSON）
 - 删除客户端
 
 ---
@@ -524,22 +594,53 @@ pip install 'copaw[mlx]'       # MLX（Apple Silicon）
 copaw models download Qwen/Qwen3-4B-GGUF
 copaw models download Qwen/Qwen3-4B --backend mlx
 
+# 从 ModelScope 下载
+copaw models download Qwen/Qwen2-0.5B-Instruct-GGUF --source modelscope
+
 # 查看已下载模型
 copaw models local
+
+# 删除已下载模型
+copaw models remove-local <model_id>
 ```
+
+**选项说明**：
+| 选项 | 简写 | 默认值 | 说明 |
+|------|------|--------|------|
+| `--backend` | `-b` | `llamacpp` | 目标后端（llamacpp 或 mlx） |
+| `--source` | `-s` | `huggingface` | 下载源（huggingface 或 modelscope） |
+| `--file` | `-f` | （自动） | 指定文件名，省略时自动选择 |
 
 #### Ollama
 
+Ollama 集成本地 Ollama 守护进程，动态加载其中的模型。
+
+**前置条件**：
+- 从 [ollama.com](https://ollama.com/) 安装 Ollama
+- 安装 Ollama SDK：`pip install 'copaw[ollama]'`
+
 ```bash
-# 安装 Ollama SDK
-pip install ollama
-
-# 下载模型
+# 下载 Ollama 模型
 copaw models ollama-pull mistral:7b
+copaw models ollama-pull qwen2.5:3b
 
-# 查看模型
+# 查看 Ollama 模型
 copaw models ollama-list
+
+# 删除 Ollama 模型
+copaw models ollama-remove mistral:7b
+
+# 在配置流程中使用
+copaw models config           # 选择 Ollama → 从模型列表中选择
+copaw models set-llm          # 切换到其他 Ollama 模型
 ```
+
+**与本地模型的区别**：
+- 模型来自 Ollama 守护进程（不由 CoPaw 下载）
+- 使用 `ollama-pull` / `ollama-remove` 而非 `download` / `remove-local`
+- 通过 Ollama CLI 或 CoPaw 添加/删除模型时，模型列表自动更新
+
+支持的热门模型：`mistral:7b`、`qwen3:8b` 等
 
 ### CLI 管理命令
 
@@ -588,12 +689,24 @@ copaw env delete KEY                 # 删除变量
 ### 频道管理
 
 ```bash
-copaw channels list                  # 查看所有频道
+copaw channels list                  # 查看所有频道（密钥脱敏）
 copaw channels config                # 交互式配置
-copaw channels install <key>         # 安装自定义频道
+copaw channels install <key>         # 安装自定义频道模块
 copaw channels add <key>             # 添加频道到 config
-copaw channels remove <key>          # 删除自定义频道
+copaw channels remove <key>          # 删除自定义频道（--keep-config 保留配置）
 ```
+
+**交互式 config 流程**：
+依次选择频道 → 启用/禁用 → 填写凭据 → 循环直到选择「保存退出」。
+
+| 频道 | 需要填写的字段 |
+|------|---------------|
+| iMessage | Bot 前缀、数据库路径、轮询间隔 |
+| Discord | Bot 前缀、Bot Token、HTTP 代理、代理认证 |
+| DingTalk | Bot 前缀、Client ID、Client Secret |
+| Feishu | Bot 前缀、App ID、App Secret |
+| QQ | Bot 前缀、App ID、Client Secret |
+| Console | Bot 前缀 |
 
 ### 定时任务
 
@@ -687,8 +800,8 @@ curl -N -X POST "http://localhost:8088/api/agent/process" \
 | 控制 | 会话 | 筛选、重命名、删除会话 |
 | 控制 | 定时任务 | 创建/编辑/删除任务、立即执行 |
 | 智能体 | 工作区 | 编辑人设文件、查看记忆、上传/下载 |
-| 智能体 | 技能 | 启用/禁用/创建/删除技能 |
-| 智能体 | MCP | 启用/禁用/创建/删除 MCP |
+| 智能体 | 技能 | 启用/禁用/创建/导入/删除技能 |
+| 智能体 | MCP | 启用/禁用/创建/编辑/删除 MCP |
 | 智能体 | 运行配置 | 修改最大迭代次数和最大输入长度 |
 | 设置 | 模型 | 配置提供商、管理模型、选择模型 |
 | 设置 | 环境变量 | 添加/编辑/删除环境变量 |
