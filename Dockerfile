@@ -72,6 +72,11 @@ ENV PYTHONUNBUFFERED=1 \
     COPAW_CONFIG_FILE="config.json" \
     COPAW_LOG_LEVEL="INFO"
 
+# 创建非 root 用户（在安装软件之前创建，避免 GID 被占用）
+# 固定 UID/GID 为 999
+RUN groupadd -r -g 999 copaw && \
+    useradd -r -u 999 -g 999 -d /data/copaw -s /sbin/nologin -c "CoPaw user" copaw
+
 # 安装运行时依赖
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -87,6 +92,22 @@ RUN install -m 0755 -d /etc/apt/keyrings && \
     apt-get install -y --no-install-recommends nodejs && \
     rm -rf /var/lib/apt/lists/*
 
+# 安装 Chromium 及依赖（无头模式，用于 MCP 浏览器功能）
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        chromium \
+        chromium-driver \
+        fonts-liberation \
+        fonts-noto-color-emoji \
+        fonts-wqy-zenhei \
+        && rm -rf /var/lib/apt/lists/*
+
+# 设置 Chromium 相关环境变量
+ENV CHROME_BIN=/usr/bin/chromium \
+    CHROME_PATH=/usr/bin/chromium \
+    PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium \
+    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+
 # 从构建阶段复制 Python 包
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
@@ -99,10 +120,6 @@ RUN mkdir -p /data/copaw/.runtime && \
           /usr/local/lib/python3.12/site-packages/copaw/providers/providers.json && \
     ln -sf /data/copaw/.runtime/envs.json \
           /usr/local/lib/python3.12/site-packages/copaw/envs/envs.json
-
-# 创建非 root 用户
-RUN groupadd -r copaw && \
-    useradd -r -g copaw -d /data/copaw -s /sbin/nologin -c "CoPaw user" copaw
 
 # 设置目录所有权
 RUN chown -R copaw:copaw /usr/local/lib/python3.12/site-packages/copaw && \
