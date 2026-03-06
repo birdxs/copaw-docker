@@ -116,6 +116,7 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 RUN mkdir -p /data/copaw/.runtime && \
     echo "{}" > /data/copaw/.runtime/providers.json && \
     echo "{}" > /data/copaw/.runtime/envs.json && \
+    ln -sf /data/copaw/.runtime /data/copaw.secret && \
     ln -sf /data/copaw/.runtime/providers.json \
           /usr/local/lib/python3.12/site-packages/copaw/providers/providers.json && \
     ln -sf /data/copaw/.runtime/envs.json \
@@ -123,7 +124,8 @@ RUN mkdir -p /data/copaw/.runtime && \
 
 # 设置目录所有权
 RUN chown -R copaw:copaw /usr/local/lib/python3.12/site-packages/copaw && \
-    chown -R copaw:copaw /data/copaw
+    chown -R copaw:copaw /data/copaw && \
+    chmod -R 700 /data/copaw/.runtime
 
 # 设置工作目录
 WORKDIR /data/copaw
