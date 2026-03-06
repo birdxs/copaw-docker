@@ -6,12 +6,7 @@
 
 CoPaw 是一款**个人助理型产品**，部署在你自己的环境中。
 
-- **多通道对话** — 通过钉钉、飞书、QQ、Discord、iMessage 等与你对话
-- **定时执行** — 按你的配置自动运行任务
-- **能力由 Skills 决定** — 内置定时任务、PDF 与表单、Word/Excel/PPT 文档处理、新闻摘要、文件阅读等，还可在 Skills 中自定义扩展
-- **数据全在本地** — 不依赖第三方托管
-
-官方仓库：https://github.com/agentscope-ai/CoPaw
+更多信息请看官方仓库：https://github.com/agentscope-ai/CoPaw
 
 ---
 
@@ -19,12 +14,15 @@ CoPaw 是一款**个人助理型产品**，部署在你自己的环境中。
 
 > **CoPaw 没有任何权限控制和登录功能，切勿将服务端口暴露到公网！**
 
-- WebUI 管理界面**没有登录验证机制**，任何能访问该端口的人都可以完全控制你的 CoPaw 实例
+<details>
+<summary>WebUI 管理界面<strong>没有登录验证机制</strong>，任何能访问该端口的人都可以完全控制你的 CoPaw 实例。点击展开安全建议。</summary>
+
 - 默认端口 `8088` 仅应在**受信任的内网环境**或通过**反向代理 + 认证**等方式访问
 - 如果必须远程访问，请使用以下安全措施之一：
   - 通过 SSH 隧道访问：`ssh -L 8088:localhost:8088 your-server`
   - 配置 Nginx/Caddy 等反向代理并添加 Basic Auth 或 OAuth 认证
   - 使用防火墙限制访问来源 IP
+</details>
 
 ---
 
@@ -53,7 +51,7 @@ docker run -d --name copaw \
 
 ---
 
-#### 方式二：使用 Docker Compose（推荐）
+#### 方式二：使用 Docker Compose（推荐✨）
 
 使用 Docker Compose 方便管理和配置。
 
@@ -70,8 +68,8 @@ cp .env.example .env
 ##### 2. 拉取并启动服务
 
 ```bash
-docker compose pull
-docker compose up -d
+docker compose pull      # 拉取或更新镜像
+docker compose up -d     # 后台启动服务
 ```
 
 ##### 3. 查看日志
@@ -150,7 +148,7 @@ copaw/
 copaw-data:/
 ├── copaw.secret -> copaw/.runtime    # 软链接指向 .runtime（兼容 SECRET_DIR）
 └── copaw/
-    ├── .runtime/              # 持久化目录（providers.json、envs.json）
+    ├── .runtime/              # 敏感配置目录（providers.json、envs.json）
     ├── config.json            # 主配置文件（通道、心跳、语言等）
     ├── SOUL.md                # Agent 核心身份与行为原则（必填）
     ├── AGENTS.md              # 详细工作流程与指南（必填）
@@ -328,6 +326,7 @@ docker compose exec copaw copaw daemon version      # 查看 CoPaw 版本
 
 本项目使用 Docker 数据卷 `copaw-data` 持久化以下内容：
 
+- `.runtime/` - 敏感配置目录（providers.json、envs.json）
 - `config.json` - 主配置文件
 - `SOUL.md` - 核心身份与行为原则
 - `AGENTS.md` - 详细的工作流程、规则和指南
