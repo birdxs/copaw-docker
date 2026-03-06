@@ -70,7 +70,8 @@ ENV PYTHONUNBUFFERED=1 \
     # CoPaw 特定环境变量
     COPAW_WORKING_DIR="/data/copaw" \
     COPAW_CONFIG_FILE="config.json" \
-    COPAW_LOG_LEVEL="INFO"
+    COPAW_LOG_LEVEL="INFO" \
+    COPAW_RUNNING_IN_CONTAINER=1
 
 # 创建非 root 用户（在安装软件之前创建，避免 GID 被占用）
 # 固定 UID/GID 为 999
