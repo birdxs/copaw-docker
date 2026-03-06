@@ -41,7 +41,7 @@ CoPaw 是一款**个人助理型产品**，部署在你自己的环境中。
 
 ```bash
 docker run -d --name copaw \
-  -p 8088:8088 \
+  -p 127.0.0.1:8088:8088 \
   -v copaw-data:/data/copaw \
   --restart unless-stopped \
   ghcr.io/log-z/copaw-docker:latest
