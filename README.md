@@ -44,6 +44,7 @@ CoPaw 是一款**个人助理型产品**，部署在你自己的环境中。
 ```bash
 docker run -d --name copaw \
   -p 8088:8088 \
+  -v copaw-data:/data/copaw \
   --restart unless-stopped \
   ghcr.io/log-z/copaw-docker:latest
 ```
@@ -147,7 +148,9 @@ copaw/
 
 ```
 copaw-data:/
+├── copaw.secret -> copaw/.runtime    # 软链接指向 .runtime（兼容 SECRET_DIR）
 └── copaw/
+    ├── .runtime/              # 持久化目录（providers.json、envs.json）
     ├── config.json            # 主配置文件（通道、心跳、语言等）
     ├── SOUL.md                # Agent 核心身份与行为原则（必填）
     ├── AGENTS.md              # 详细工作流程与指南（必填）
@@ -158,7 +161,9 @@ copaw-data:/
     ├── chats.json             # 会话列表
     ├── active_skills/         # 当前激活的技能
     ├── customized_skills/     # 用户自定义技能
-    └── memory/                # Agent 记忆文件存储
+    ├── custom_channels/       # 用户自定义频道模块
+    ├── mcp_clients/           # MCP 客户端配置
+    └── memory/                # Agent 记忆文件存储（含每日日志）
 ```
 
 ---
@@ -258,6 +263,10 @@ docker compose exec copaw copaw chats delete <id>   # 删除会话
 # 维护
 docker compose exec copaw copaw clean               # 清空工作目录（交互确认）
 docker compose exec copaw copaw clean --yes         # 不确认直接清空
+
+# 配置重载（无需重启容器，v0.0.5+）
+docker compose exec copaw copaw daemon reload-config # 重新加载配置
+docker compose exec copaw copaw daemon version      # 查看 CoPaw 版本
 ```
 
 ---
@@ -302,6 +311,14 @@ docker compose exec copaw copaw clean --yes         # 不确认直接清空
 | `OPENAI_API_KEY` | OpenAI 兼容接口 API Key |
 | `OPENAI_BASE_URL` | OpenAI 兼容接口地址 |
 | `OPENAI_MODEL_NAME` | OpenAI 兼容模型名称 |
+| `ANTHROPIC_API_KEY` | Anthropic API Key（v0.0.5+ 新增） |
+
+### Web 服务配置
+
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `COPAW_CORS_ORIGINS` | `*` | CORS 允许的来源（v0.0.4+ 新增） |
+| `COPAW_RUNNING_IN_CONTAINER` | `true` | 是否在容器内运行（自动检测，通常无需手动设置） |
 
 ---
 
@@ -336,9 +353,10 @@ docker compose exec copaw copaw clean --yes         # 不确认直接清空
 | 钉钉 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | 飞书 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Discord | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | 🚧 | 🚧 | 🚧 | 🚧 |
-| iMessage | ✓ | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ |
+| iMessage | ✓ | ✓ (v0.0.5+) | ✓ (v0.0.5+) | ✓ (v0.0.5+) | ✗ | ✓ | ✓ (v0.0.5+) | ✓ (v0.0.5+) | ✓ (v0.0.5+) | ✗ |
 | QQ | ✓ | 🚧 | 🚧 | 🚧 | 🚧 | ✓ | 🚧 | 🚧 | 🚧 | 🚧 |
 | Telegram | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Twilio Voice | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ |
 
 > ✓ = 已支持；🚧 = 施工中；✗ = 不支持
 
@@ -350,14 +368,18 @@ docker compose exec copaw copaw clean --yes         # 不确认直接清空
 
 | 容器端口 | 主机端口 | 说明 |
 |----------|----------|------|
-| `8088` | `8088` | CoPaw Web 服务端口 |
+| `8088` | `127.0.0.1:8088` | CoPaw Web 服务端口（v0.0.5+ 默认绑定 127.0.0.1） |
 
 如需修改主机端口，编辑 `docker-compose.yml`：
 
 ```yaml
 ports:
   - "9000:8088"  # 使用 9000 端口访问
+  # 或 v0.0.5+ 允许外部访问（不推荐）
+  # - "0.0.0.0:8088:8088"
 ```
+
+> **安全更新**：v0.0.5 起，默认端口绑定改为 `127.0.0.1` 以提高安全性，仅允许本地访问。
 
 ---
 
@@ -434,6 +456,22 @@ docker compose restart
 
 ## 新功能支持
 
+### v0.0.5 新增功能
+
+- **Twilio Voice 频道** - 语音频道集成，支持 Cloudflare tunnel
+- **Telegram CLI 配置** - 交互式命令行工具配置 Telegram 频道
+- **Anthropic 提供商** - 新增内置模型提供商
+- **DeepSeek Reasoner 支持** - 保留 `reasoning_content` 用于推理模式
+- **版本更新通知** - 自动版本检测与更新提示
+- **Daemon 模式** - `copaw daemon` CLI 管理后台服务
+- **Agent 中断 API** - `interrupt()` 方法取消活跃回复任务
+- **MCP 客户端自动恢复** - 自动重连关闭的 MCP 会话
+- **iMessage 附件支持** - 支持发送图片、音频、视频文件
+- **消息过滤配置** - 每频道可隐藏工具执行步骤 (`filter_tool_messages`) 和思考内容 (`filter_thinking`)
+- **Docker 配置持久化** - `providers.json` 和 `envs.json` 自动迁移到 `SECRET_DIR`
+- **频道文档链接** - 每个频道卡片上的快速 "Doc" 按钮
+- **Skills Hub 导入** - 支持从社区平台导入技能
+
 ### MCP (模型上下文协议)
 
 CoPaw 0.0.3+ 支持 MCP（Model Context Protocol），可以连接外部 MCP 服务器扩展能力。
@@ -491,15 +529,21 @@ CoPaw 支持本地运行模型（无需 API Key），但需要额外依赖：
 | 组 | 功能 | 说明 |
 |----|------|------|
 | 聊天 | 聊天 | 和 CoPaw 对话、管理会话 |
-| 控制 | 频道 | 启用/禁用频道、填入凭据 |
+| 控制 | 频道 | 启用/禁用频道、填入凭据、快速文档链接（v0.0.5+） |
 | 控制 | 会话 | 筛选、重命名、删除会话 |
 | 控制 | 定时任务 | 创建/编辑/删除任务、立即执行 |
 | 智能体 | 工作区 | 编辑人设文件、查看记忆、上传/下载 |
-| 智能体 | 技能 | 启用/禁用/创建/删除技能 |
+| 智能体 | 技能 | 启用/禁用/创建/**导入**/删除技能 |
 | 智能体 | MCP | 启用/禁用/创建/删除 MCP 客户端 |
 | 智能体 | 运行配置 | 修改最大迭代次数和最大输入长度 |
-| 设置 | 模型 | 配置提供商、管理模型、选择模型 |
+| 设置 | 模型 | 配置提供商（含自定义提供商）、管理本地/Ollama 模型、选择模型 |
 | 设置 | 环境变量 | 添加/编辑/删除环境变量 |
+
+**Skills Hub 导入**（v0.0.5+）：支持从社区平台导入技能
+- `https://skills.sh/...`
+- `https://clawhub.ai/...`
+- `https://skillsmp.com/...`
+- `https://github.com/...`
 
 ### 相关链接
 
