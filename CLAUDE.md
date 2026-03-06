@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Docker deployment project for CoPaw, a personal assistant product based on AgentScope. CoPaw supports multi-channel conversations (DingTalk, Feishu, QQ, Discord, iMessage) and runs locally with user-configured LLM providers.
+This is a Docker deployment project for CoPaw, a personal assistant product based on AgentScope. CoPaw supports multi-channel conversations (DingTalk, Feishu, QQ, Discord, iMessage, Telegram, Twilio Voice) and runs locally with user-configured LLM providers.
 
 **Key Technologies**: Python 3.12, Docker, Docker Compose, AgentScope framework
 
@@ -23,6 +23,7 @@ This is a Docker deployment project for CoPaw, a personal assistant product base
 - The WebUI management interface has **no login authentication**
 - Anyone who can access port 8088 can fully control the CoPaw instance
 - Default port `8088` should only be accessed in **trusted internal networks**
+- v0.0.5+ changed default Docker port binding to `127.0.0.1` for improved security
 - If remote access is required, use:
   - SSH tunnel: `ssh -L 8088:localhost:8088 your-server`
   - Reverse proxy (Nginx/Caddy) with Basic Auth or OAuth
@@ -41,7 +42,7 @@ This is a Docker deployment project for CoPaw, a personal assistant product base
 ```bash
 # Build the Docker image (with optional version)
 docker compose build
-docker compose build --build-arg COPAW_VERSION=0.0.3
+docker compose build --build-arg COPAW_VERSION=0.0.5
 
 # Start the service
 docker compose up -d
@@ -84,12 +85,14 @@ docker compose exec copaw copaw models config                  # Interactive con
 docker compose exec copaw copaw models config-key modelscope   # Configure API Key
 docker compose exec copaw copaw models config-key dashscope    # Configure DashScope API Key
 docker compose exec copaw copaw models config-key custom       # Configure custom provider
+docker compose exec copaw copaw models config-key anthropic    # Configure Anthropic API Key (v0.0.5+)
 docker compose exec copaw copaw models set-llm                 # Switch active model
 
 # Model Management (Local Models - llama.cpp / MLX)
 docker compose exec copaw copaw models download <repo_id>      # Download local model
 docker compose exec copaw copaw models download Qwen/Qwen3-4B-GGUF
 docker compose exec copaw copaw models download Qwen/Qwen3-4B --backend mlx
+docker compose exec copaw copaw models download <repo_id> --source modelscope  # From ModelScope
 docker compose exec copaw copaw models local                   # List downloaded models
 docker compose exec copaw copaw models remove-local <model_id>  # Delete downloaded model
 
@@ -109,10 +112,18 @@ docker compose exec copaw copaw channels remove <key>     # Remove custom channe
 docker compose exec copaw copaw skills list         # List all skills
 docker compose exec copaw copaw skills config       # Interactive enable/disable
 
+# Daemon Mode (v0.0.5+)
+docker compose exec copaw copaw daemon status       # Service status
+docker compose exec copaw copaw daemon restart      # Print restart instructions
+docker compose exec copaw copaw daemon reload-config # Reload configuration
+docker compose exec copaw copaw daemon version      # Version info
+docker compose exec copaw copaw daemon logs -n 50   # Recent logs
+
 # Cron Jobs
 docker compose exec copaw copaw cron list           # List all jobs
-docker compose exec copaw copaw cron create ...     # Create a job
+docker compose exec copaw copaw cron get <job_id>   # Get job configuration details
 docker compose exec copaw copaw cron state <job_id> # Check job state
+docker compose exec copaw copaw cron create ...     # Create a job
 docker compose exec copaw copaw cron pause <job_id> # Pause a job
 docker compose exec copaw copaw cron resume <job_id># Resume a paused job
 docker compose exec copaw copaw cron run <job_id>   # Run once immediately
@@ -193,6 +204,8 @@ All CoPaw data is stored in the Docker volume `copaw-data` at `/data/copaw`:
 | File/Directory | Purpose |
 |----------------|---------|
 | `config.json` | Main configuration (channels, heartbeat, language) |
+| `providers.json` | LLM provider configuration (v0.0.5+: migrated to SECRET_DIR) |
+| `envs.json` | Environment variables (v0.0.5+: migrated to SECRET_DIR) |
 | `SOUL.md` | Agent core identity and behavior rules (required) |
 | `AGENTS.md` | Detailed workflow and guidelines (required) |
 | `MEMORY.md` | Long-term memory storage |
@@ -205,6 +218,8 @@ All CoPaw data is stored in the Docker volume `copaw-data` at `/data/copaw`:
 | `custom_channels/` | User-defined channel modules |
 | `memory/` | Agent memory files (with daily logs) |
 
+**v0.0.5 Important Change**: `providers.json` and `envs.json` are now stored in a persistent `SECRET_DIR` to survive container restarts. Automatic migration happens on first startup.
+
 ### Environment Variables
 
 Key variables are defined in two places:
@@ -214,7 +229,7 @@ Key variables are defined in two places:
 
 Critical variables:
 - `EMBEDDING_API_KEY` - Required for vector memory search
-- `MODELSCOPE_API_KEY` / `DASHSCOPE_API_KEY` / `OPENAI_API_KEY` - LLM provider keys
+- `MODELSCOPE_API_KEY` / `DASHSCOPE_API_KEY` / `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` - LLM provider keys
 - `COPAW_AUTO_INIT` - Controls automatic initialization (default: true)
 
 See [.env.example](.env.example) for all available variables.
@@ -251,13 +266,49 @@ Access http://localhost:8088/ after startup:
 | Control | Sessions | Filter, rename, delete sessions |
 | Control | Cron Jobs | Create/edit/delete tasks, run immediately |
 | Agent | Workspace | Edit persona files, view memory, upload/download |
-| Agent | Skills | Enable/disable/create/import/delete skills |
+| Agent | Skills | Enable/disable/create/**import**/delete skills |
 | Agent | MCP | Enable/disable/create/delete MCP clients |
 | Agent | Runtime Config | Modify max iterations and max input length |
-| Settings | Models | Configure providers, manage local/Ollama models, select model |
+| Settings | Models | Configure providers (custom providers), manage local/Ollama models, select model |
 | Settings | Environment Variables | Add/edit/delete environment variables |
 
-## New Features (CoPaw 0.0.3+)
+**Skills Hub Import**: Now supports importing skills from community platforms:
+- `https://skills.sh/...`
+- `https://clawhub.ai/...`
+- `https://skillsmp.com/...`
+- `https://github.com/...`
+
+---
+
+## New Features (CoPaw 0.0.5)
+
+### v0.0.5 New Features (Latest)
+
+- **Twilio Voice Channel** - Voice channel integration with Cloudflare tunnel support
+- **Telegram CLI Configuration** - Interactive command-line tool for configuring Telegram
+- **Anthropic Provider** - New built-in model provider
+- **DeepSeek Reasoner Support** - Preserved `reasoning_content` for reasoner mode
+- **Version Update Notification** - Automatic version detection with update badge
+- **Daemon Mode** - `copaw daemon` CLI for managing background service
+- **Agent Interruption API** - `interrupt()` method to cancel active reply tasks
+- **MCP Client Auto-Recovery** - Automatic reconnect/rebuild for closed MCP sessions
+- **Windows One-Click Install** - `install.bat` script support
+- **Channel Documentation Links** - Quick "Doc" buttons on each channel card
+- **iMessage Attachments** - Support for sending images, audio, and video files
+- **Message Filtering** - Per-channel `filter_tool_messages` and `filter_thinking` options
+- **Docker Config Persistence** - `providers.json` and `envs.json` auto-migrated to `SECRET_DIR`
+- **Docker Security** - Default port binding changed to `127.0.0.1` (v0.0.5)
+
+### v0.0.4 Features (Retained)
+
+- **Telegram Channel Support** - New Telegram bot channel with full multimodal support
+- **OpenAI & Azure OpenAI** - New built-in model providers
+- **Aliyun coding-plan Provider** - New model provider option
+- **CORS Configuration** - New `COPAW_CORS_ORIGINS` environment variable
+- **Heartbeat Monitor Panel** - New monitoring UI in console
+- **Audio File Support** - DingTalk and Feishu channels now support audio files
+
+### v0.0.3 Features (Retained)
 
 ### MCP (Model Context Protocol) Support
 
@@ -370,6 +421,7 @@ docker compose exec copaw copaw models ollama-pull qwen3:8b
 - `copaw channels remove <key>` - Remove custom channel
 
 **Cron Job Management**:
+- `copaw cron get <job_id>` - Get job configuration details (v0.0.4+)
 - `copaw cron state <job_id>` - Check job runtime state
 - `copaw cron pause <job_id>` - Pause a job
 - `copaw cron resume <job_id>` - Resume paused job
@@ -404,9 +456,10 @@ docker compose exec copaw copaw models ollama-pull qwen3:8b
 | DingTalk | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Feishu | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Discord | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | 🚧 | 🚧 | 🚧 | 🚧 |
-| iMessage | ✓ | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ |
+| iMessage | ✓ | ✓ (v0.0.5+) | ✓ (v0.0.5+) | ✓ (v0.0.5+) | ✗ | ✓ | ✓ (v0.0.5+) | ✓ (v0.0.5+) | ✓ (v0.0.5+) | ✗ |
 | QQ | ✓ | 🚧 | 🚧 | 🚧 | 🚧 | ✓ | 🚧 | 🚧 | 🚧 | 🚧 |
 | Telegram | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Twilio Voice | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ |
 
 > ✓ = Supported; 🚧 = In progress; ✗ = Not supported
 
