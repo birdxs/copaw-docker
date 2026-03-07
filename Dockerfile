@@ -70,7 +70,8 @@ ENV PYTHONUNBUFFERED=1 \
     # CoPaw 特定环境变量
     COPAW_WORKING_DIR="/data/copaw" \
     COPAW_CONFIG_FILE="config.json" \
-    COPAW_LOG_LEVEL="INFO"
+    COPAW_LOG_LEVEL="INFO" \
+    COPAW_RUNNING_IN_CONTAINER=1
 
 # 创建非 root 用户（在安装软件之前创建，避免 GID 被占用）
 # 固定 UID/GID 为 999
@@ -116,6 +117,7 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 RUN mkdir -p /data/copaw/.runtime && \
     echo "{}" > /data/copaw/.runtime/providers.json && \
     echo "{}" > /data/copaw/.runtime/envs.json && \
+    ln -sf /data/copaw/.runtime /data/copaw.secret && \
     ln -sf /data/copaw/.runtime/providers.json \
           /usr/local/lib/python3.12/site-packages/copaw/providers/providers.json && \
     ln -sf /data/copaw/.runtime/envs.json \
@@ -123,7 +125,8 @@ RUN mkdir -p /data/copaw/.runtime && \
 
 # 设置目录所有权
 RUN chown -R copaw:copaw /usr/local/lib/python3.12/site-packages/copaw && \
-    chown -R copaw:copaw /data/copaw
+    chown -R copaw:copaw /data/copaw && \
+    chmod -R 700 /data/copaw/.runtime
 
 # 设置工作目录
 WORKDIR /data/copaw

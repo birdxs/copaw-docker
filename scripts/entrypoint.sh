@@ -90,6 +90,12 @@ if [ ! -f "${ENVS_FILE}" ]; then
     echo "{}" > "${ENVS_FILE}"
 fi
 
+# 设置 .runtime 目录及其内容权限（仅 copaw 用户可访问）
+# 目录权限 700，文件权限 600
+log_info "Setting permissions for runtime directory"
+chmod -R 700 "${RUNTIME_DIR}"
+find "${RUNTIME_DIR}" -type f -exec chmod 600 {} \;
+
 # 执行传入的命令
 log_info "Executing command: $@"
 exec "$@"
