@@ -92,6 +92,8 @@ jobs:
           labels: ${{ steps.meta-ghcr.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            COPAW_VERSION=${{ inputs.image_tag }}           
 
       - name: Generate summary
         run: |
