@@ -24,7 +24,6 @@ FROM python:3.12-slim AS builder
 # 设置构建参数
 ARG COPAW_VERSION="latest"
 ARG COPAW_EXTRAS=""
-ARG COPAW_ENABLED_CHANNELS="discord,telegram,dingtalk,feishu,qq,mqtt,console"
 
 # 设置工作目录
 WORKDIR /build
@@ -50,14 +49,14 @@ RUN if [ "$COPAW_VERSION" = "latest" ]; then \
       else \
         pip install --no-cache-dir "copaw[$COPAW_EXTRAS]==${COPAW_VERSION}"; \
       fi \
-    fi
+    fi \
+    && pip install --no-cache-dir paho-mqtt
 
 # ==================== 运行阶段 ====================
 FROM python:3.12-slim
 
 # 重新声明构建参数，使其可用于 LABEL
 ARG COPAW_VERSION="latest"
-ARG COPAW_ENABLED_CHANNELS="discord,telegram,dingtalk,feishu,qq,mqtt,console"
 
 # 设置标签
 LABEL maintainer="copaw@example.com"
@@ -74,7 +73,6 @@ ENV PYTHONUNBUFFERED=1 \
     COPAW_CONFIG_FILE="config.json" \
     COPAW_LOG_LEVEL="INFO" \
     COPAW_RUNNING_IN_CONTAINER=1 \
-    COPAW_ENABLED_CHANNELS=${COPAW_ENABLED_CHANNELS} \
     COPAW_PORT=8088
 
 # 创建非 root 用户（在安装软件之前创建，避免 GID 被占用）
