@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Docker deployment project for CoPaw, a personal assistant product based on AgentScope. CoPaw supports multi-channel conversations (DingTalk, Feishu, QQ, Discord, iMessage, Telegram, Twilio Voice) and runs locally with user-configured LLM providers.
+This is a Docker deployment project for CoPaw, a personal assistant product based on AgentScope. CoPaw supports multi-channel conversations (DingTalk, Feishu, QQ, Discord, iMessage, Telegram, Twilio Voice, MQTT) and runs locally with user-configured LLM providers.
 
 **Key Technologies**: Python 3.12, Docker, Docker Compose, AgentScope framework
 
@@ -86,6 +86,7 @@ docker compose exec copaw copaw models config-key modelscope   # Configure API K
 docker compose exec copaw copaw models config-key dashscope    # Configure DashScope API Key
 docker compose exec copaw copaw models config-key custom       # Configure custom provider
 docker compose exec copaw copaw models config-key anthropic    # Configure Anthropic API Key (v0.0.5+)
+docker compose exec copaw copaw models config-key gemini       # Configure Gemini API Key (v0.0.6+)
 docker compose exec copaw copaw models set-llm                 # Switch active model
 
 # Model Management (Local Models - llama.cpp / MLX)
@@ -144,6 +145,9 @@ docker compose exec copaw copaw chats delete <id>   # Delete session
 docker compose exec copaw copaw clean               # Clean working directory (with confirmation)
 docker compose exec copaw copaw clean --yes         # Clean without confirmation
 docker compose exec copaw copaw clean --dry-run     # Show what would be deleted
+
+# Desktop Mode (v0.0.6+)
+docker compose exec copaw copaw desktop             # Open CoPaw in native webview window
 ```
 
 ### Data Management
@@ -269,8 +273,10 @@ Access http://localhost:8088/ after startup:
 | Agent | Skills | Enable/disable/create/**import**/delete skills |
 | Agent | MCP | Enable/disable/create/delete MCP clients |
 | Agent | Runtime Config | Modify max iterations and max input length |
+| Agent | Tools | Enable/disable built-in tools (v0.0.6+) |
+| Agent | System Prompts | Custom system prompts from workspace files (v0.0.6+) |
 | Settings | Models | Configure providers (custom providers), manage local/Ollama models, select model |
-| Settings | Environment Variables | Add/edit/delete environment variables |
+| Settings | Environment Variables | Add/edit/delete environment variables (with security masking v0.0.6+) |
 
 **Skills Hub Import**: Now supports importing skills from community platforms:
 - `https://skills.sh/...`
@@ -280,9 +286,47 @@ Access http://localhost:8088/ after startup:
 
 ---
 
-## New Features (CoPaw 0.0.5)
+## New Features (CoPaw 0.0.6)
 
-### v0.0.5 New Features (Latest)
+### v0.0.6 New Features (Latest)
+
+#### Desktop Applications
+- **Native Desktop Installers** - One-click installer for Windows and standalone `.app` bundle for macOS
+- **Desktop Launch Command** - New `copaw desktop` command opens CoPaw in native webview window with automatic server startup
+
+#### Internationalization
+- **Russian Language** - Complete translation across console UI, agent configuration files, and initialization command
+- **Japanese Language** - Full console UI translation with language switcher integration
+
+#### Channel & Communication
+- **MQTT Channel** - IoT and message queue integration support
+- **Telegram Access Control** - DM/group access policies with user allowlists and custom denial messages
+- **QQ Markdown Support** - Rich markdown messages with validation-aware fallback
+- **QQ Rich Media** - Attachment download and parsing for images, videos, audio, and files
+- **Unified Allowlist Control** - Centralized DM/group access policies for Discord and Feishu
+- **DingTalk Media Expansion** - Extended audio/video format support
+- **Feishu Table Rendering** - Markdown tables converted to native interactive message cards
+- **Feishu Post Messages** - Support for receiving Feishu post-type rich text messages
+- **Discord Media Support** - Media sending with local/remote file handling
+- **Docker Channel Enablement** - Telegram and Discord channels now enabled by default in Docker images
+
+#### Model & AI Features
+- **Gemini Thinking Model** - Preserved reasoning content via `extra_content` field for Gemini thinking models
+- **MLX Backend** - Message normalization handling for MLX tokenizer compatibility
+- **Local/Cloud LLM Routing** - Intelligent model selection with policy hooks
+
+#### Console & UI
+- **Environment Variable Security** - Password-style masking for sensitive values with show/hide toggle
+- **Environment Variable Deletion** - Single and bulk deletion support
+- **Built-in Tool Management** - Dedicated Tools page with toggle switches for enabling/disabling built-in tools
+- **Custom System Prompts** - Select and reorder workspace Markdown files to compose custom system prompts
+
+#### Memory & Configuration
+- **ReMeLight Migration** - Refactored memory system from ReMeCopaw to ReMeLight
+- **Configurable Memory Compaction** - New compact split strategy with tunable parameters
+- **Smart Tool Output Truncation** - Automatic truncation for file reads and shell commands
+
+### v0.0.5 Features (Retained)
 
 - **Twilio Voice Channel** - Voice channel integration with Cloudflare tunnel support
 - **Telegram CLI Configuration** - Interactive command-line tool for configuring Telegram
@@ -455,11 +499,12 @@ docker compose exec copaw copaw models ollama-pull qwen3:8b
 |---------|:----:|:-----:|:-----:|:-----:|:----:|:---------:|:----------:|:----------:|:----------:|:---------:|
 | DingTalk | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Feishu | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Discord | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | 🚧 | 🚧 | 🚧 | 🚧 |
+| Discord | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ (v0.0.6+) | ✓ (v0.0.6+) | ✓ (v0.0.6+) | ✓ (v0.0.6+) |
 | iMessage | ✓ | ✓ (v0.0.5+) | ✓ (v0.0.5+) | ✓ (v0.0.5+) | ✗ | ✓ | ✓ (v0.0.5+) | ✓ (v0.0.5+) | ✓ (v0.0.5+) | ✗ |
-| QQ | ✓ | 🚧 | 🚧 | 🚧 | 🚧 | ✓ | 🚧 | 🚧 | 🚧 | 🚧 |
+| QQ | ✓ | ✓ (v0.0.6+) | ✓ (v0.0.6+) | ✓ (v0.0.6+) | ✓ (v0.0.6+) | ✓ | 🚧 | 🚧 | 🚧 | 🚧 |
 | Telegram | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Twilio Voice | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ |
+| MQTT | ✓ | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ |
 
 > ✓ = Supported; 🚧 = In progress; ✗ = Not supported
 
