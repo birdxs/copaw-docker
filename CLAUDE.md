@@ -233,7 +233,7 @@ Key variables are defined in two places:
 
 Critical variables:
 - `EMBEDDING_API_KEY` - Required for vector memory search
-- `MODELSCOPE_API_KEY` / `DASHSCOPE_API_KEY` / `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` - LLM provider keys
+- `MODELSCOPE_API_KEY` / `DASHSCOPE_API_KEY` / `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GEMINI_API_KEY` - LLM provider keys
 - `COPAW_AUTO_INIT` - Controls automatic initialization (default: true)
 
 See [.env.example](.env.example) for all available variables.

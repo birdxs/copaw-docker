@@ -23,11 +23,13 @@ log_error() {
 COPAW_WORKING_DIR="/data/copaw"
 COPAW_LOG_LEVEL="${COPAW_LOG_LEVEL:-INFO}"
 COPAW_AUTO_INIT="${COPAW_AUTO_INIT:-true}"
+COPAW_PORT="${COPAW_PORT:-8088}"
 
 # 显示配置信息
 log_info "Starting CoPaw container..."
 log_info "Working directory: ${COPAW_WORKING_DIR}"
 log_info "Log level: ${COPAW_LOG_LEVEL}"
+log_info "Port: ${COPAW_PORT}"
 
 # 检查是否需要初始化
 if [ ! -f "${COPAW_WORKING_DIR}/config.json" ]; then

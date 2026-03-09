@@ -24,6 +24,7 @@ FROM python:3.12-slim AS builder
 # 设置构建参数
 ARG COPAW_VERSION="latest"
 ARG COPAW_EXTRAS=""
+ARG COPAW_ENABLED_CHANNELS="discord,telegram,dingtalk,feishu,qq,mqtt,console"
 
 # 设置工作目录
 WORKDIR /build
@@ -56,6 +57,7 @@ FROM python:3.12-slim
 
 # 重新声明构建参数，使其可用于 LABEL
 ARG COPAW_VERSION="latest"
+ARG COPAW_ENABLED_CHANNELS="discord,telegram,dingtalk,feishu,qq,mqtt,console"
 
 # 设置标签
 LABEL maintainer="copaw@example.com"
@@ -71,7 +73,9 @@ ENV PYTHONUNBUFFERED=1 \
     COPAW_WORKING_DIR="/data/copaw" \
     COPAW_CONFIG_FILE="config.json" \
     COPAW_LOG_LEVEL="INFO" \
-    COPAW_RUNNING_IN_CONTAINER=1
+    COPAW_RUNNING_IN_CONTAINER=1 \
+    COPAW_ENABLED_CHANNELS=${COPAW_ENABLED_CHANNELS} \
+    COPAW_PORT=8088
 
 # 创建非 root 用户（在安装软件之前创建，避免 GID 被占用）
 # 固定 UID/GID 为 999
@@ -101,7 +105,9 @@ RUN apt-get update && \
         fonts-liberation \
         fonts-noto-color-emoji \
         fonts-wqy-zenhei \
-        && rm -rf /var/lib/apt/lists/*
+        fonts-wqy-microhei \
+        && rm -rf /var/lib/apt/lists/* \
+        && sed -i 's/^CHROMIUM_FLAGS=""/CHROMIUM_FLAGS="--no-sandbox"/' /usr/bin/chromium
 
 # 设置 Chromium 相关环境变量
 ENV CHROME_BIN=/usr/bin/chromium \
@@ -150,5 +156,5 @@ VOLUME ["/data/copaw"]
 # 入口点
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
-# 默认命令（监听所有网络接口）
-CMD ["copaw", "app", "--host", "0.0.0.0"]
+# 默认命令（监听所有网络接口，使用 COPAW_PORT 环境变量）
+CMD ["sh", "-c", "copaw app --host 0.0.0.0 --port ${COPAW_PORT}"]
