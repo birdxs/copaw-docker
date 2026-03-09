@@ -50,7 +50,7 @@ RUN if [ "$COPAW_VERSION" = "latest" ]; then \
         pip install --no-cache-dir "copaw[$COPAW_EXTRAS]==${COPAW_VERSION}"; \
       fi \
     fi \
-    && pip install --no-cache-dir paho-mqtt
+    && pip install --no-cache-dir paho-mqtt aiofiles
 
 # ==================== 运行阶段 ====================
 FROM python:3.12-slim
