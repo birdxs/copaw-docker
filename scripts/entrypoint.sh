@@ -36,7 +36,8 @@ if [ -n "${COPAW_PORT}" ]; then
     fi
 fi
 
-COPAW_PORT="${COPAW_PORT:-8088}"
+# 设置端口（带默认值），并 export 以确保子进程能正确获取
+export COPAW_PORT="${COPAW_PORT:-8088}"
 
 # 显示配置信息
 log_info "Starting CoPaw container..."
