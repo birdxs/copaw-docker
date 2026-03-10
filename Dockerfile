@@ -49,7 +49,8 @@ RUN if [ "$COPAW_VERSION" = "latest" ]; then \
       else \
         pip install --no-cache-dir "copaw[$COPAW_EXTRAS]==${COPAW_VERSION}"; \
       fi \
-    fi
+    fi \
+    && pip install --no-cache-dir paho-mqtt aiofiles
 
 # ==================== 运行阶段 ====================
 FROM python:3.12-slim
@@ -71,7 +72,8 @@ ENV PYTHONUNBUFFERED=1 \
     COPAW_WORKING_DIR="/data/copaw" \
     COPAW_CONFIG_FILE="config.json" \
     COPAW_LOG_LEVEL="INFO" \
-    COPAW_RUNNING_IN_CONTAINER=1
+    COPAW_RUNNING_IN_CONTAINER=1 \
+    COPAW_PORT=8088
 
 # 创建非 root 用户（在安装软件之前创建，避免 GID 被占用）
 # 固定 UID/GID 为 999
@@ -101,7 +103,9 @@ RUN apt-get update && \
         fonts-liberation \
         fonts-noto-color-emoji \
         fonts-wqy-zenhei \
-        && rm -rf /var/lib/apt/lists/*
+        fonts-wqy-microhei \
+        && rm -rf /var/lib/apt/lists/* \
+        && sed -i 's/^CHROMIUM_FLAGS=""/CHROMIUM_FLAGS="--no-sandbox"/' /usr/bin/chromium
 
 # 设置 Chromium 相关环境变量
 ENV CHROME_BIN=/usr/bin/chromium \
@@ -150,5 +154,5 @@ VOLUME ["/data/copaw"]
 # 入口点
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
-# 默认命令（监听所有网络接口）
-CMD ["copaw", "app", "--host", "0.0.0.0"]
+# 默认命令（监听所有网络接口，使用 COPAW_PORT 环境变量）
+CMD ["sh", "-c", "copaw app --host 0.0.0.0 --port ${COPAW_PORT}"]

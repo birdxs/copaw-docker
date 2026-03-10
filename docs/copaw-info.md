@@ -4,13 +4,51 @@
 >
 > 官方文档：http://copaw.agentscope.io/docs/
 >
-> **更新日期**: 2026-03-06
+> **更新日期**: 2026-03-10
 
 ---
 
-## 重要更新 (2026-03-06)
+## 重要更新 (2026-03-10)
 
-### v0.0.5 新增功能 (最新)
+### v0.0.6 新增功能 (最新)
+
+#### 桌面应用
+- **原生桌面安装包** - Windows 一键安装程序和 macOS `.app` 应用包
+- **`copaw desktop` 命令** - 在原生 webview 窗口中打开 CoPaw，自动启动服务
+
+#### 国际化
+- **俄语支持** - 完整的控制台 UI、Agent 配置文件翻译
+- **日语支持** - 完整的控制台 UI 翻译
+
+#### 频道与通信
+- **MQTT 频道** - 新增 IoT 和消息队列集成支持
+- **Telegram 访问控制** - DM/群组访问策略，用户白名单，自定义拒绝消息
+- **QQ Markdown 支持** - 富文本消息，自动降级为纯文本
+- **QQ 富媒体支持** - 图片、视频、音频、文件附件的接收和解析
+- **统一白名单控制** - 扩展到 Discord 和飞书频道
+- **Discord 媒体发送** - 支持发送图片、视频、音频、文件
+- **飞书表格渲染** - Markdown 表格转换为原生交互式消息卡片
+- **飞书富文本消息** - 支持接收飞书帖子类型富文本消息
+- **钉钉媒体扩展** - 扩展音视频格式支持
+- **Docker 频道启用** - Telegram 和 Discord 在 Docker 镜像中默认启用
+
+#### 模型与 AI
+- **Gemini Thinking Model** - 保留推理内容（extra_content 字段）
+- **MLX 后端优化** - 消息规范化处理，兼容 MLX tokenizer
+- **本地/云端 LLM 路由** - 智能模型选择策略
+
+#### 控制台与 UI
+- **环境变量安全** - 敏感值密码式遮罩，支持显示/隐藏切换
+- **环境变量批量删除** - 支持单个和批量删除
+- **内置工具管理** - 专门的 Tools 页面，开关切换内置工具
+- **自定义系统提示词** - 从工作区 Markdown 文件组合自定义系统提示词
+
+#### 内存与配置
+- **ReMeLight 迁移** - 从 ReMeCopaw 重构内存系统
+- **可配置内存压缩** - 新的压缩策略，可调参数
+- **智能工具输出截断** - 自动截断文件读取和 shell 命令输出，防止上下文溢出
+
+### v0.0.5 新增功能
 - **Twilio Voice 频道** - 语音频道集成，支持 Cloudflare tunnel
 - **Telegram CLI 配置** - 交互式命令行工具配置 Telegram 频道
 - **Anthropic 提供商** - 新增内置模型提供商
@@ -41,6 +79,7 @@
 - **控制台功能增强** - 技能导入/创建、工作区上传下载、运行配置
 
 ### CLI 新增命令
+- `copaw desktop` - 打开桌面应用窗口 (v0.0.6)
 - `copaw daemon` - 管理后台服务 (v0.0.5)
 - `copaw models download/remove-local` - 本地模型管理 (llama.cpp/MLX)
 - `copaw models ollama-pull/ollama-list/ollama-remove` - Ollama 模型管理
@@ -56,7 +95,7 @@
 
 CoPaw 是一款**个人助理型产品**，部署在你自己的环境中。
 
-- **多通道对话** — 通过钉钉、飞书、QQ、Discord、iMessage、Twilio Voice 等与你对话
+- **多通道对话** — 通过钉钉、飞书、QQ、Discord、iMessage、Telegram、Twilio Voice、MQTT 等与你对话
 - **定时执行** — 按你的配置自动运行任务
 - **能力由 Skills 决定** — 内置定时任务、PDF 与表单、Word/Excel/PPT 文档处理、新闻摘要、文件阅读等，还可在 Skills 中自定义扩展
 - **数据全在本地** — 不依赖第三方托管
@@ -65,7 +104,7 @@ CoPaw 是一款**个人助理型产品**，部署在你自己的环境中。
 
 使用方式可以概括为两类：
 
-1. **在聊天软件里对话** — 在钉钉、飞书、QQ、Discord、iMessage 或 Twilio Voice 里发消息，CoPaw 在同一 app 内回复
+1. **在聊天软件里对话** — 在钉钉、飞书、QQ、Discord、iMessage、Telegram、Twilio Voice 或 MQTT 里发消息，CoPaw 在同一 app 内回复
 2. **定时自动执行** — 按设定时间自动运行任务
 
 ### 技术基础
@@ -128,14 +167,28 @@ pip install copaw
 
 可选：先创建并激活虚拟环境再安装（`python -m venv .venv`，Linux/macOS 下 `source .venv/bin/activate`，Windows 下 `.venv\Scripts\Activate.ps1`）。
 
-#### 方式三：魔搭创空间一键配置（无需安装）
+#### 方式三：桌面应用 (v0.0.6 新增，Beta)
+
+如果你不习惯使用命令行，可以下载并使用 CoPaw 的桌面应用版本，无需手动配置 Python 环境或执行命令。
+
+**特点**：
+- ✅ **零配置**：下载后双击即可运行，无需安装 Python 或配置环境变量
+- ✅ **跨平台**：支持 Windows 10+ 和 macOS 14+ (推荐 Apple Silicon)
+- ✅ **可视化**：自动打开浏览器界面，无需手动输入地址
+- ⚠️ **Beta 阶段**：功能持续完善中，欢迎反馈问题
+
+**下载地址**：[GitHub Releases](https://github.com/agentscope-ai/CoPaw/releases)
+- Windows: `CoPaw-Setup-<version>.exe`
+- macOS: `CoPaw-<version>-macOS.zip`
+
+#### 方式四：魔搭创空间一键配置（无需安装）
 
 1. 前往 [魔搭](https://modelscope.cn/register) 注册并登录
 2. 打开 [CoPaw 创空间](https://modelscope.cn/studios/fork?target=AgentScope/CoPaw)，一键配置即可使用
 
 > **重要**：使用创空间请将空间设为**非公开**，否则你的 CoPaw 可能被他人操纵。
 
-#### 方式四：Docker
+#### 方式五：Docker
 
 镜像在 **Docker Hub**（`agentscope/copaw`）。镜像 tag：`latest`（稳定版）、`pre`（PyPI 预发布版）。
 
@@ -150,7 +203,7 @@ docker run -p 127.0.0.1:8088:8088 -v copaw-data:/app/working agentscope/copaw:la
 
 然后在浏览器打开 http://127.0.0.1:8088/ 进入控制台。配置、记忆与 Skills 保存在 `copaw-data` 卷中。
 
-#### 方式五：部署到阿里云 ECS
+#### 方式六：部署到阿里云 ECS
 
 打开 [CoPaw 阿里云 ECS 部署链接](https://computenest.console.aliyun.com/service/instance/create/cn-hangzhou?type=user&ServiceId=service-1ed84201799f40879884)，按页面提示填写部署参数。
 
@@ -170,7 +223,7 @@ copaw init
 - 心跳 — 间隔、目标、可选活跃时间段
 - 工具详情 — 是否在频道消息中显示工具调用细节
 - 语言 — Agent 人设文件使用 zh 或 en
-- 频道 — 可选配置 iMessage / Discord / DingTalk / Feishu / QQ / Telegram / Twilio / Console
+- 频道 — 可选配置 iMessage / Discord / DingTalk / Feishu / QQ / Telegram / Twilio / MQTT / Console
 - LLM 提供商 — 选择提供商、输入 API Key、选择模型（必选）
 - 技能 — 全部启用 / 不启用 / 自定义选择
 - 环境变量 — 可选添加工具所需的键值对
@@ -270,6 +323,7 @@ curl -N -X POST "http://localhost:8088/api/agent/process" \
 | **discord** | Discord 机器人 | `bot_token`, `http_proxy`, `http_proxy_auth` |
 | **imessage** | macOS iMessage | `db_path`, `poll_sec` |
 | **telegram** | Telegram 机器人 | `bot_token` (v0.0.5+ 支持 CLI 配置) |
+| **mqtt** | MQTT 消息队列 (v0.0.6 新增) | `host`, `port`, `transport`, `qos`, `subscribe_topic`, `publish_topic` |
 | **twilio voice** | Twilio 语音 (v0.0.5 新增) | `account_sid`, `auth_token`, `phone_number` |
 | **console** | 控制台 | （只需开关） |
 
@@ -288,11 +342,12 @@ curl -N -X POST "http://localhost:8088/api/agent/process" \
 |------|:--------:|:--------:|:--------:|:--------:|:--------:|:--------:|:--------:|:--------:|:--------:|:--------:|
 | 钉钉 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | 飞书 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Discord | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | 🚧 | 🚧 | 🚧 | 🚧 |
+| Discord | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ (v0.0.6+) | ✓ (v0.0.6+) | ✓ (v0.0.6+) | ✓ (v0.0.6+) |
 | iMessage | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ (v0.0.5+) | ✓ (v0.0.5+) | ✓ (v0.0.5+) | ✗ |
-| QQ | ✓ | 🚧 | 🚧 | 🚧 | 🚧 | ✓ | 🚧 | 🚧 | 🚧 | 🚧 |
+| QQ | ✓ | ✓ (v0.0.6+) | ✓ (v0.0.6+) | ✓ (v0.0.6+) | ✓ (v0.0.6+) | ✓ | 🚧 | 🚧 | 🚧 | 🚧 |
 | Telegram | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Twilio Voice | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ |
+| MQTT | ✓ | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ |
 
 > ✓ = 已支持；🚧 = 施工中；✗ = 不支持
 
@@ -309,6 +364,7 @@ curl -N -X POST "http://localhost:8088/api/agent/process" \
 | OpenAI | `openai` | `https://api.openai.com/v1` |
 | Azure OpenAI | `azure_openai` | （你自己填） |
 | Anthropic (v0.0.5 新增) | `anthropic` | `https://api.anthropic.com` |
+| Gemini (v0.0.6 新增) | `gemini` | `https://generativelanguage.googleapis.com` |
 | Aliyun coding-plan | `codingplan` | （你自己填） |
 | 自定义 | `custom` | （你自己填） |
 
@@ -404,10 +460,17 @@ copaw daemon logs [-n 50]    # 最近 N 行日志（默认 100）
 copaw models list                    # 查看所有提供商
 copaw models config                  # 完整交互式配置
 copaw models config-key <provider>   # 配置 API Key
+copaw models config-key gemini       # 配置 Gemini API Key (v0.0.6+)
 copaw models set-llm                 # 切换活跃模型
 copaw models download <repo_id>      # 下载本地模型
 copaw models local                   # 查看已下载模型
 copaw models ollama-pull <model>     # 下载 Ollama 模型
+```
+
+### 桌面应用 (v0.0.6 新增)
+
+```bash
+copaw desktop                        # 打开 CoPaw 桌面应用窗口
 ```
 
 ### 频道管理
@@ -459,8 +522,9 @@ copaw skills config                  # 交互式开关
 |------|------|------|
 | 项目介绍 | CoPaw 是什么、能做什么 | http://copaw.agentscope.io/docs/intro |
 | 快速开始 | 安装和启动指南 | http://copaw.agentscope.io/docs/quickstart |
+| 桌面应用 | 桌面应用使用指南 (v0.0.6+) | http://copaw.agentscope.io/docs/desktop |
 | 控制台 | 控制台使用说明 | http://copaw.agentscope.io/docs/console |
-| 频道配置 | 钉钉/飞书/QQ/Discord/iMessage/Telegram/Twilio 配置 | http://copaw.agentscope.io/docs/channels |
+| 频道配置 | 钉钉/飞书/QQ/Discord/iMessage/Telegram/Twilio/MQTT 配置 | http://copaw.agentscope.io/docs/channels |
 | Skills | 技能扩展说明 | http://copaw.agentscope.io/docs/skills |
 | MCP | MCP 客户端配置 | http://copaw.agentscope.io/docs/mcp |
 | 记忆 | 记忆系统说明 | http://copaw.agentscope.io/docs/memory |
