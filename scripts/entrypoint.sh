@@ -23,7 +23,21 @@ log_error() {
 COPAW_WORKING_DIR="/data/copaw"
 COPAW_LOG_LEVEL="${COPAW_LOG_LEVEL:-INFO}"
 COPAW_AUTO_INIT="${COPAW_AUTO_INIT:-true}"
-COPAW_PORT="${COPAW_PORT:-8088}"
+
+# 检查 COPAW_PORT 是否为有效端口号
+# K8s 可能注入类似 "tcp://10.43.3.33:8088" 的值，需要清理
+if [ -n "${COPAW_PORT}" ]; then
+    # 检查是否为纯数字（有效端口号）
+    if [[ "${COPAW_PORT}" =~ ^[0-9]+$ ]]; then
+        log_info "COPAW_PORT is valid: ${COPAW_PORT}"
+    else
+        log_warn "COPAW_PORT='${COPAW_PORT}' is not a valid port number (possibly injected by K8s Service). Unsetting..."
+        unset COPAW_PORT
+    fi
+fi
+
+# 设置端口（带默认值），并 export 以确保子进程能正确获取
+export COPAW_PORT="${COPAW_PORT:-8088}"
 
 # 显示配置信息
 log_info "Starting CoPaw container..."
@@ -99,5 +113,5 @@ chmod -R 700 "${RUNTIME_DIR}"
 find "${RUNTIME_DIR}" -type f -exec chmod 600 {} \;
 
 # 执行传入的命令
-log_info "Executing command: $@"
+log_info "Executing command: $*"
 exec "$@"
